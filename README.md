@@ -1,5 +1,5 @@
 # must
-Must functions which panic on errors
+`Must` functions which panic on error, there is a `Must2` and `Must3` variant as well.
 
 ## See the samples
 
