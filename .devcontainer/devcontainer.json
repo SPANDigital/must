@@ -9,7 +9,14 @@
 	// "features": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/guiyomh/features/golangci-lint:0": {},
+    "ghcr.io/guiyomh/features/goreleaser:0": {},
+    "ghcr.io/rocker-org/devcontainer-features/pandoc:1": {},
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/prulloac/devcontainer-features/pre-commit:1": {}
+  },
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "go version",
