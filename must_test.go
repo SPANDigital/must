@@ -1,121 +1,71 @@
 package must
 
 import (
+	"context"
 	"errors"
-	"reflect"
+	"github.com/cucumber/godog"
 	"testing"
 )
 
-func TestMustURL(t *testing.T) {
-	type args[T any] struct {
-		v   T
-		err error
-	}
-	type testCase[T any] struct {
-		name      string
-		args      args[T]
-		want      T
-		wantPanic bool
-	}
-	tests := []testCase[int]{
-		{
-			name: "failure",
-			args: args[int]{
-				v:   1,
-				err: nil,
-			},
-			want:      1,
-			wantPanic: false,
-		},
-		{
-			name: "success",
-			args: args[int]{
-				v:   0,
-				err: errors.New("some error"),
-			},
-			wantPanic: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			panicked := false
-			var got int
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						panicked = true
-					}
-				}()
-				got = Must(tt.args.v, tt.args.err)
-			}()
-			if got != tt.want {
-				t.Errorf("got %v, want %v", got, tt.want)
-			}
-			if panicked != tt.wantPanic {
-				t.Errorf("Panicked = %v, wantPanic %v", panicked, tt.wantPanic)
-			}
-		})
+type argsKey struct{}
+type resultKey struct{}
+
+func itShouldPanic(ctx context.Context) (context.Context, error) {
+	result := ctx.Value(resultKey{})
+	switch r := result.(type) {
+	case result1:
+		return itShouldPanic1(ctx, r)
+	case result2:
+		return itShouldPanic2(ctx, r)
+	case result3:
+		return itShouldPanic3(ctx, r)
+	default:
+		return ctx, errors.New("result key not found in context")
 	}
 }
 
-func TestMust2(t *testing.T) {
-	type args[T1 any, T2 any] struct {
-		v1  T1
-		v2  T2
-		err error
+func itShouldNotPanic(ctx context.Context) (context.Context, error) {
+	result := ctx.Value(resultKey{})
+	switch r := result.(type) {
+	case result1:
+		return itShouldNotPanic1(ctx, r)
+	case result2:
+		return itShouldNotPanic2(ctx, r)
+	case result3:
+		return itShouldNotPanic3(ctx, r)
+	default:
+		return ctx, errors.New("result key not found in context")
 	}
-	type testCase[T1 any, T2 any] struct {
-		name      string
-		args      args[T1, T2]
-		want1     T1
-		want2     T2
-		wantPanic bool
-	}
-	tests := []testCase[int, int]{
-		{
-			name: "success",
-			args: args[int, int]{
-				v1:  1,
-				v2:  2,
-				err: nil,
-			},
-			want1:     1,
-			want2:     2,
-			wantPanic: false,
+}
+
+func InitializeScenario(ctx *godog.ScenarioContext) {
+	ctx.Step(`^a value (\d+) and no error$`, aIntValueAndNoError)
+	ctx.Step(`^the Must function is called$`, theMustFunctionIsCalled)
+	ctx.Step(`^the result should be (\d+)$`, theResult1ShouldBeInt)
+	ctx.Step(`^it should panic$`, itShouldPanic)
+	ctx.Step(`^it should not panic$`, itShouldNotPanic)
+	ctx.Step(`^a value (\d+) and an error "([^"]*)"$`, anIntValueAndAnError)
+	ctx.Step(`^values (\d+) and (\d+) and no error$`, values2IntAndNoError)
+	ctx.Step(`^the Must2 function is called$`, must2FunctionIsCalled)
+	ctx.Step(`^the results should be (\d+) and (\d+)$`, theResult2ShouldBeInt)
+	ctx.Step(`^values (\d+) and (\d+) and an error "([^"]*)"$`, twoIntValuesAndAnError)
+	ctx.Step(`^values (\d+), (\d+), (\d+), and no error$`, values3IntAndNoError)
+	ctx.Step(`^the Must3 function is called$`, must3FunctionIsCalled)
+	ctx.Step(`^the results should be (\d+), (\d+), and (\d+)$`, theResult3ShouldBeInt)
+	ctx.Step(`^values (\d+), (\d+), (\d+), and an error "([^"]*)"$`, threeIntValuesAndAnError)
+}
+
+func TestFeatures(t *testing.T) {
+	suite := godog.TestSuite{
+		ScenarioInitializer: InitializeScenario,
+		Options: &godog.Options{
+			Format:   "pretty",
+			Paths:    []string{"features"},
+			TestingT: t, // Testing instance that will run subtests.
 		},
-		{
-			name: "failure",
-			args: args[int, int]{
-				v1:  1,
-				v2:  2,
-				err: errors.New("some error"),
-			},
-			want1:     0,
-			want2:     0,
-			wantPanic: true,
-		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			panicked := false
-			var got1, got2 int
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						panicked = true
-					}
-				}()
-				got1, got2 = Must2(tt.args.v1, tt.args.v2, tt.args.err)
-			}()
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("Must2() got1 = %v, want2 %v", got1, tt.want1)
-			}
-			if !reflect.DeepEqual(got2, tt.want2) {
-				t.Errorf("Must2() got2 = %v, want2 %v", got1, tt.want2)
-			}
-			if panicked != tt.wantPanic {
-				t.Errorf("Panicked = %v, wantPanic %v", panicked, tt.wantPanic)
-			}
-		})
+
+	if suite.Run() != 0 {
+		t.Fatal("non-zero status returned, failed to run feature tests")
 	}
 }
