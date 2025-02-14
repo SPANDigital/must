@@ -71,7 +71,3 @@ func itShouldNotPanic1(ctx context.Context, result result1) (context.Context, er
 	}
 	return ctx, nil
 }
-
-func twoIntValuesAndAnError(ctx context.Context, arg1 int, arg2 int, err string) (context.Context, error) {
-	return context.WithValue(ctx, argsKey{}, args2{arg1, arg2, errors.New(err)}), nil
-}
